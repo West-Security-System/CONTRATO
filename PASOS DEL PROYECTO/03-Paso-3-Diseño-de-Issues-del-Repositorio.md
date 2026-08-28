@@ -1,635 +1,578 @@
 # Paso 3 - Diseño de las Issues del Repositorio
 
-## 1. Objetivo del paso
+## 3.1 Objetivo del paso
 
-Este paso define cómo se va a construir el proyecto de forma incremental y controlada. La idea es dividir el desarrollo en tareas pequeñas, verificables y ordenadas por dependencias, para que cada bloque del sistema pueda completarse sin perder claridad de alcance ni generar trabajo duplicado.
+Las issues representan cambios concretos para construir West Security Company. Están ordenadas según sus dependencias y prioridades, desde la persistencia y el acceso hasta la operación diaria del guardia y la supervisión administrativa. Cada issue se limita a una parte verificable del sistema y no incorpora funcionalidades fuera del alcance definido en el Paso 2.
 
----
+Las issues 1 a 7 tienen prioridad alta porque habilitan la base, la persistencia y el acceso seguro. Las issues 8 a 20 tienen prioridad alta porque construyen el flujo operativo de usuarios, servicios, turnos e ingreso/egreso. Las issues 21 a 24 tienen prioridad media porque agregan supervisión, correcciones administrativas y consulta mensual sobre un flujo ya funcional.
 
-## 2. Issues propuestas
+## 3.2 Issues del proyecto
 
-### Issue 1 - Configuración inicial del repositorio
-**Título y descripción**: Configuración inicial del repositorio. Preparar la estructura base del proyecto, con carpetas, archivos principales y la primera configuración del servidor.
+### Issue 1 - Inicializar la base SQLite del sistema
+**Título y descripción**: Crear la base local `west_control.db` y habilitar su carga al iniciar el servidor.
 
-**Objetivo**: dejar el proyecto listo para comenzar a desarrollarse sin errores de estructura ni configuración. El problema que se resuelve es la falta de una base técnica clara y ordenada.
+**Objetivo y problema que resuelve**: establecer la persistencia necesaria para no perder usuarios, servicios, horarios y registros cuando se reinicia la aplicación.
 
 **Alcance**:
-- Incluido: estructura de carpetas, archivos base del backend, configuración mínima del servidor y organización de documentación.
-- Excluido: lógica del negocio, pantallas funcionales, validaciones reales, conexión a base de datos.
+- Incluido: inicialización de SQLite/sql.js, creación de la carpeta `data` y activación de claves foráneas.
+- Excluido: datos de prueba, pantallas y consultas específicas de cada módulo.
 
 **Criterios de aceptación**:
-- el repositorio tiene una estructura clara y ordenada,
-- el servidor puede levantarse con una configuración mínima,
-- el proyecto queda listo para continuar con el desarrollo.
+- la base se crea automáticamente si no existe,
+- el servidor inicia sin error cuando la base ya existe,
+- las claves foráneas quedan activas.
 
 **Dependencias**: ninguna.
 
 **Evidencias o pruebas**:
-- captura del árbol del proyecto,
-- ejecución exitosa del servidor base,
-- verificación de respuesta del servicio en localhost.
+- ejecución del servidor con base nueva,
+- ejecución posterior usando la misma base,
+- captura de la estructura creada.
 
 ---
 
-### Issue 2 - Instalación de dependencias del backend
-**Título y descripción**: Instalación de dependencias del backend. Instalar las librerías necesarias para ejecutar el servidor, manejar sesiones y proteger la aplicación de forma básica.
+### Issue 2 - Crear tablas de usuarios y roles
+**Título y descripción**: Crear la tabla `usuarios` con credenciales, datos personales, rol y bloqueos.
 
-**Objetivo**: preparar el entorno técnico para que el proyecto pueda ejecutarse sin errores de módulos ni librerías faltantes. El problema que resuelve es la ausencia de una base funcional para el backend.
+**Objetivo y problema que resuelve**: almacenar los dos perfiles del sistema y sus datos operativos sin usar información fija en el código.
 
 **Alcance**:
-- Incluido: instalación de Express, express-session, bcrypt y base de datos local.
-- Excluido: lógica funcional del sistema, autenticación completa, reportes y interfaces avanzadas.
+- Incluido: campos `username`, `password`, `nombre`, `dni`, `rol`, `bloqueos` y fecha de creación.
+- Excluido: formulario de administración y permisos distintos de `admin` y `guardia`.
 
 **Criterios de aceptación**:
-- todas las dependencias quedan instaladas,
-- el proyecto puede iniciarse sin errores de importación,
-- el entorno queda listo para continuar con el desarrollo backend.
+- el nombre de usuario es único,
+- el rol por defecto es `guardia`,
+- los datos obligatorios no aceptan valores vacíos.
 
 **Dependencias**: Issue 1.
 
 **Evidencias o pruebas**:
-- salida de instalación exitosa,
-- ejecución del servidor sin errores,
-- comprobación de que los módulos se importan correctamente.
+- consulta de la tabla `usuarios`,
+- inserción de un admin y un guardia,
+- prueba de rechazo de un usuario duplicado.
 
 ---
 
-### Issue 3 - Crear la base de datos inicial
-**Título y descripción**: Crear la base de datos inicial. Definir las tablas necesarias para usuarios, servicios, horarios y registros del sistema.
+### Issue 3 - Crear tablas de servicios, horarios y registros
+**Título y descripción**: Crear las tablas `locales`, `horarios` y `registros` con las relaciones necesarias para controlar turnos.
 
-**Objetivo**: guardar la información del proyecto de forma persistente y confiable. El problema que resuelve es la falta de almacenamiento real y consistente de los datos del negocio.
+**Objetivo y problema que resuelve**: representar en la base el servicio, el horario asignado y el ciclo completo de ingreso/egreso.
 
 **Alcance**:
-- Incluido: creación de la base de datos, tablas principales, relaciones básicas y pruebas de lectura/escritura.
-- Excluido: reportes complejos, integraciones externas y validaciones avanzadas.
+- Incluido: coordenadas del local, relación horario-local, usuario asignado, timestamps, datos de ubicación y estado de egreso.
+- Excluido: consultas del panel, métricas y notificaciones.
 
 **Criterios de aceptación**:
-- existen las tablas esenciales del sistema,
-- se pueden insertar y consultar datos de prueba,
-- la aplicación puede operar con persistencia real.
+- un horario pertenece a un servicio existente,
+- un registro pertenece a un usuario existente,
+- un registro permite guardar ingreso y egreso en la misma fila.
+
+**Dependencias**: Issue 1, Issue 2.
+
+**Evidencias o pruebas**:
+- consulta de las tres tablas,
+- inserción de un servicio con horario,
+- inserción y lectura de un registro de prueba.
+
+---
+
+### Issue 4 - Sembrar el administrador inicial
+**Título y descripción**: Crear automáticamente el usuario administrador `westcompany` cuando no exista.
+
+**Objetivo y problema que resuelve**: permitir el primer acceso administrativo sin editar manualmente la base de datos.
+
+**Alcance**:
+- Incluido: función `seedAdmin`, hash de contraseña y creación condicional del usuario admin.
+- Excluido: recuperación de contraseña y creación automática de guardias.
+
+**Criterios de aceptación**:
+- el usuario admin se crea una sola vez,
+- la contraseña almacenada no está en texto plano,
+- el reinicio del servidor no duplica la cuenta.
 
 **Dependencias**: Issue 2.
 
 **Evidencias o pruebas**:
-- captura de la estructura de la base,
-- prueba de insert y select,
-- log de funcionamiento correcto de la base.
+- consulta de la cuenta inicial,
+- comparación de login correcto e incorrecto,
+- segundo arranque sin duplicación.
 
 ---
 
-### Issue 4 - Crear usuario administrador por defecto
-**Título y descripción**: Crear usuario administrador por defecto. Dejar una cuenta inicial con permisos administrativos para que el sistema pueda empezar a utilizarse.
+### Issue 5 - Implementar inicio y cierre de sesión
+**Título y descripción**: Implementar `POST /api/login`, `POST /api/logout` y `GET /api/me`.
 
-**Objetivo**: asegurar que el proyecto pueda arrancar con una primera cuenta válida. El problema que resuelve es la ausencia de un usuario principal para entrar al sistema desde el inicio.
-
-**Alcance**:
-- Incluido: usuario administrador inicial, contraseña encriptada y creación automática al iniciar la app.
-- Excluido: gestión de usuarios desde la interfaz, roles complejos y permisos avanzados.
-
-**Criterios de aceptación**:
-- existe un administrador inicial al arrancar la aplicación,
-- se puede iniciar sesión con credenciales válidas,
-- la contraseña queda protegida con hash.
-
-**Dependencias**: Issue 3.
-
-**Evidencias o pruebas**:
-- log de creación del administrador,
-- prueba de login con credenciales iniciales,
-- validación del hash guardado en la base.
-
----
-
-### Issue 5 - Implementar login y autenticación
-**Título y descripción**: Implementar login y autenticación. Crear la lógica para validar usuario y contraseña y mantener la sesión activa del usuario autenticado.
-
-**Objetivo**: permitir el ingreso seguro al sistema y controlar quién puede acceder a cada sección. El problema que resuelve es la ausencia de autenticación real y segura.
+**Objetivo y problema que resuelve**: autenticar a administradores y guardias y permitir que la interfaz conozca la sesión actual.
 
 **Alcance**:
-- Incluido: endpoint de login, validación de credenciales, creación de sesión y respuesta con datos básicos.
-- Excluido: recuperación de contraseña, login con redes sociales y permisos complejos por acción.
+- Incluido: comparación con bcrypt, creación/destrucción de sesión y devolución de datos básicos del usuario.
+- Excluido: OAuth, Google, SSO y recuperación de contraseña.
 
 **Criterios de aceptación**:
-- un usuario válido puede iniciar sesión,
-- un usuario inválido recibe error claro,
-- la sesión queda activa para la navegación del sistema.
+- credenciales válidas crean una sesión,
+- credenciales inválidas responden con error 401,
+- logout destruye la sesión,
+- `/api/me` devuelve el usuario autenticado.
 
 **Dependencias**: Issue 4.
 
 **Evidencias o pruebas**:
-- pruebas de login exitoso y fallido,
-- captura de respuesta HTTP,
-- comprobación de sesión activa.
+- pruebas HTTP de login válido e inválido,
+- consulta de `/api/me` antes y después del logout,
+- verificación de contraseña hasheada.
 
 ---
 
-### Issue 6 - Proteger rutas según el rol del usuario
-**Título y descripción**: Proteger rutas según el rol del usuario. Restringir el acceso a zonas del sistema según si el usuario es administrador o guardia.
+### Issue 6 - Aplicar límite de intentos de login
+**Título y descripción**: Configurar el límite de 30 intentos de autenticación en una ventana de 15 minutos.
 
-**Objetivo**: garantizar que cada perfil acceda solo a las partes que le corresponden. El problema que resuelve es el acceso no autorizado a funciones sensibles.
+**Objetivo y problema que resuelve**: reducir intentos automatizados de acceso sobre `/api/login`.
 
 **Alcance**:
-- Incluido: middleware de autenticación, middleware de administrador y validación de roles.
-- Excluido: permisos granulares por tarea, SSO externo y roles muy complejos.
+- Incluido: `express-rate-limit` aplicado al endpoint de login y respuesta de bloqueo.
+- Excluido: captcha, autenticación multifactor y bloqueo permanente de cuentas.
 
 **Criterios de aceptación**:
-- un usuario sin sesión no puede acceder a rutas protegidas,
-- un guardia no puede ingresar al panel administrativo,
-- un administrador sí puede entrar al panel de gestión.
+- los primeros 30 intentos permitidos procesan normalmente,
+- los intentos posteriores dentro de la ventana responden con error,
+- el límite se aplica al login y no bloquea las consultas operativas normales.
 
 **Dependencias**: Issue 5.
 
 **Evidencias o pruebas**:
-- pruebas de acceso con y sin sesión,
-- prueba de acceso con usuario admin y guardia,
-- captura de respuestas 401 y 403.
+- prueba automatizada o manual de múltiples intentos,
+- respuesta del límite alcanzado,
+- verificación de acceso posterior a la ventana.
 
 ---
 
-### Issue 7 - Crear pantalla de login
-**Título y descripción**: Crear pantalla de login. Diseñar la primera vista del sistema para que el usuario ingrese usuario y contraseña.
+### Issue 7 - Proteger rutas autenticadas y administrativas
+**Título y descripción**: Aplicar `requiereAuth` y `requiereAdmin` a las rutas del sistema.
 
-**Objetivo**: dejar una interfaz simple y clara para autenticarse. El problema que resuelve es la ausencia de una vista de entrada al sistema.
+**Objetivo y problema que resuelve**: impedir que usuarios sin sesión o guardias ejecuten operaciones administrativas.
 
 **Alcance**:
-- Incluido: formulario de ingreso, campos de usuario y contraseña, botón de acceso y diseño básico.
-- Excluido: registro de usuarios, recuperación de contraseña y autenticación externa.
+- Incluido: protección de rutas `/api/mis-servicios`, `/api/guardias` y `/api/admin/*`.
+- Excluido: permisos por botón, nuevos roles y SSO.
 
 **Criterios de aceptación**:
-- la pantalla se visualiza correctamente,
-- el usuario puede completar los campos,
-- el formulario se comunica con la API de login.
+- una petición sin sesión recibe 401,
+- una sesión de guardia en `/api/admin/*` recibe 403,
+- una sesión admin puede acceder a sus endpoints.
 
 **Dependencias**: Issue 5.
+
+**Evidencias o pruebas**:
+- pruebas con cookie ausente,
+- pruebas con sesión de guardia,
+- pruebas con sesión de administrador.
+
+---
+
+### Issue 8 - Implementar la pantalla de login
+**Título y descripción**: Conectar `public/login.html` y `public/js/login.js` con `POST /api/login`.
+
+**Objetivo y problema que resuelve**: permitir que ambos perfiles ingresen desde el navegador sin usar llamadas manuales a la API.
+
+**Alcance**:
+- Incluido: campos de usuario y contraseña, envío del formulario, redirección por rol y mensaje de error.
+- Excluido: registro público y recuperación de contraseña.
+
+**Criterios de aceptación**:
+- el login válido redirige al panel correspondiente,
+- el login inválido muestra el error del servidor,
+- los campos obligatorios se validan antes de enviar.
+
+**Dependencias**: Issue 5, Issue 7.
 
 **Evidencias o pruebas**:
 - captura del formulario,
-- prueba de envío del formulario,
-- verificación de la respuesta del backend.
+- prueba de redirección admin/guardia,
+- prueba visual de credenciales inválidas.
 
 ---
 
-### Issue 8 - Crear pantalla principal del guardia
-**Título y descripción**: Crear pantalla principal del guardia. Diseñar la vista inicial del perfil de seguridad con acceso a sus servicios y acciones principales.
+### Issue 9 - Implementar CRUD de usuarios del administrador
+**Título y descripción**: Conectar el panel con `GET/POST/PUT/DELETE /api/admin/usuarios`.
 
-**Objetivo**: permitir que el guardia vea su estado y registre su actividad desde una interfaz ordenada. El problema que resuelve es la ausencia de un punto de entrada claro para el flujo del personal de seguridad.
+**Objetivo y problema que resuelve**: permitir que el administrador mantenga actualizado el personal que puede operar en el sistema.
 
 **Alcance**:
-- Incluido: pantalla principal, información del usuario, servicios asignados y acceso a ingreso/egreso.
-- Excluido: reportes avanzados, administración y vista con calendario complejo.
+- Incluido: listado, creación, edición, eliminación, validación de username y hash de contraseña.
+- Excluido: sueldos, legajos, licencias e importación masiva.
 
 **Criterios de aceptación**:
-- el guardia entra a su vista principal,
-- puede ver los servicios asignados,
-- tiene acceso directo a la operación principal del turno.
+- el administrador puede crear, editar y eliminar un usuario,
+- un username duplicado responde 409,
+- un admin no puede eliminarse a sí mismo,
+- la contraseña nueva se guarda hasheada.
 
-**Dependencias**: Issue 6, Issue 7.
+**Dependencias**: Issue 7.
 
 **Evidencias o pruebas**:
-- captura de la pantalla,
-- prueba de carga con usuario autenticado,
-- comprobación de que los datos visibles son correctos.
+- capturas de alta, edición y baja,
+- prueba de duplicado,
+- consulta de persistencia en `usuarios`.
 
 ---
 
-### Issue 9 - Crear panel de administración
-**Título y descripción**: Crear panel de administración. Diseñar la vista principal del administrador con las secciones más importantes del sistema.
+### Issue 10 - Implementar bloqueos de días por guardia
+**Título y descripción**: Conectar `PUT /api/admin/usuarios/:id/bloqueos` para guardar días en los que un guardia no puede ser asignado.
 
-**Objetivo**: centralizar la administración para que el administrador gestione el sistema sin navegar en pantallas aisladas. El problema que resuelve es la falta de una vista general ordenada para administración.
+**Objetivo y problema que resuelve**: registrar restricciones operativas individuales antes de crear o modificar horarios.
 
 **Alcance**:
-- Incluido: panel principal, navegación entre módulos, acceso a usuarios, servicios y registros.
-- Excluido: dashboards complejos, exportación avanzada y reportes visuales sofisticados.
+- Incluido: edición de bloqueos, serialización en el campo `bloqueos` y visualización en el panel.
+- Excluido: licencias laborales, cálculo de vacaciones y notificaciones externas.
 
 **Criterios de aceptación**:
-- el administrador entra al panel,
-- ve las secciones principales,
-- la navegación es clara y funcional.
+- el administrador puede marcar y desmarcar días,
+- los bloqueos sobreviven al reinicio,
+- la API devuelve el estado actualizado.
 
-**Dependencias**: Issue 6, Issue 7.
+**Dependencias**: Issue 9.
 
 **Evidencias o pruebas**:
-- captura del panel,
-- validación de acceso con usuario admin,
-- comprobación de bloqueo para usuarios sin permisos.
+- captura del formulario de bloqueos,
+- consulta antes y después del reinicio,
+- prueba de guardado y lectura del JSON.
 
 ---
 
-### Issue 10 - Gestionar usuarios y roles
-**Título y descripción**: Gestionar usuarios y roles. Permitir crear, editar, listar y eliminar usuarios desde la administración.
+### Issue 11 - Implementar CRUD de servicios con coordenadas
+**Título y descripción**: Conectar el panel con `GET/POST/PUT/DELETE /api/admin/locales` para administrar servicios o locales.
 
-**Objetivo**: controlar el personal del sistema y mantener sus datos actualizados. El problema que resuelve es la ausencia de administración del personal dentro del producto.
+**Objetivo y problema que resuelve**: permitir definir los lugares donde se controlará la presencia de los guardias.
 
 **Alcance**:
-- Incluido: alta de usuarios, edición de datos y control de roles.
-- Excluido: sueldos, permisos complejos e importación masiva.
+- Incluido: nombre único, latitud, longitud, edición, eliminación y listado de servicios.
+- Excluido: mapas externos, geocodificación automática y seguimiento en vivo.
 
 **Criterios de aceptación**:
-- el administrador puede crear usuarios,
-- puede editar la información básica,
-- no se permiten usuarios duplicados,
-- la eliminación y edición funcionan correctamente.
+- el administrador puede crear, modificar y eliminar un servicio,
+- el nombre duplicado se rechaza,
+- latitud y longitud quedan guardadas,
+- un servicio eliminado no deja horarios huérfanos.
 
-**Dependencias**: Issue 3, Issue 9.
+**Dependencias**: Issue 3, Issue 7.
 
 **Evidencias o pruebas**:
-- pruebas de creación, edición y eliminación,
-- validación de usuarios duplicados,
-- comprobación de persistencia en la base de datos.
+- prueba CRUD completa,
+- consulta de coordenadas guardadas,
+- comprobación de eliminación de relaciones por cascada.
 
 ---
 
-### Issue 11 - Gestionar servicios o locales
-**Título y descripción**: Gestionar servicios o locales. Crear y administrar los servicios donde trabajan los guardias.
+### Issue 12 - Implementar horarios por servicio
+**Título y descripción**: Conectar la creación, edición, eliminación y consulta de horarios asociados a cada local.
 
-**Objetivo**: definir los puntos de trabajo del sistema y evitar que el control se quede sin una estructura real de servicios. El problema que resuelve es la falta de registro de los lugares de trabajo.
-
-**Alcance**:
-- Incluido: alta de servicios, edición de nombre y datos básicos, eliminación y listado.
-- Excluido: geolocalización avanzada, mapas externos y reglas complejas de asignación.
-
-**Criterios de aceptación**:
-- un servicio puede crearse y guardarse,
-- puede modificarse o eliminarse,
-- la lista se actualiza correctamente en la interfaz.
-
-**Dependencias**: Issue 3, Issue 9.
-
-**Evidencias o pruebas**:
-- prueba CRUD del servicio,
-- comprobación de persistencia,
-- captura del listado actualizado.
-
----
-
-### Issue 12 - Agregar coordenadas geográficas a los servicios
-**Título y descripción**: Agregar coordenadas geográficas a los servicios. Guardar la ubicación del servicio con latitud y longitud.
-
-**Objetivo**: permitir validar si el guardia está en el lugar correcto al registrar su presencia. El problema que resuelve es la falta de referencia geográfica del servicio.
+**Objetivo y problema que resuelve**: definir cuándo puede registrarse un turno y qué guardias están asociados a cada servicio.
 
 **Alcance**:
-- Incluido: latitud, longitud, almacenamiento y edición desde administración.
-- Excluido: mapas interactivos, geocodificación externa y rastreo continuo.
+- Incluido: `GET/POST/PUT/DELETE` de horarios, hora inicial/final y rango de días.
+- Excluido: planificación automática y sincronización con calendarios externos.
 
 **Criterios de aceptación**:
-- cada servicio tiene una ubicación válida,
-- la información queda guardada,
-- el administrador puede editar la ubicación cuando lo necesite.
+- un horario queda asociado al servicio elegido,
+- se pueden editar horas y días,
+- se puede eliminar un horario,
+- la consulta devuelve solo horarios del servicio indicado.
 
 **Dependencias**: Issue 11.
 
 **Evidencias o pruebas**:
-- prueba de guardado de coordenadas,
-- consulta del backend para confirmar persistencia,
-- validación de edición desde la interfaz.
+- captura del formulario de horario,
+- pruebas de alta, edición y baja,
+- consulta del endpoint por servicio.
 
 ---
 
-### Issue 13 - Crear horarios por servicio
-**Título y descripción**: Crear horarios por servicio. Definir los horarios de ingreso, salida y disponibilidad para cada servicio.
+### Issue 13 - Asignar guardias a horarios
+**Título y descripción**: Permitir asociar un `guardia_id` a cada horario desde el panel administrativo.
 
-**Objetivo**: controlar el trabajo del guardia dentro del turno y organizar la disponibilidad del servicio. El problema que resuelve es la falta de definición temporal del servicio.
+**Objetivo y problema que resuelve**: asegurar que el sistema conozca qué persona está habilitada para cubrir cada turno.
 
 **Alcance**:
-- Incluido: horario de inicio, horario de fin, relación con el servicio y listado/edición.
-- Excluido: carga masiva de turnos, automatización avanzada y reportes complejos.
+- Incluido: selector de guardia, asociación horario-usuario y visualización de asignaciones.
+- Excluido: asignación automática, optimización de dotación y recursos humanos.
 
 **Criterios de aceptación**:
-- se pueden crear horarios para un servicio,
-- se pueden modificar y consultar,
-- la información queda persistida.
+- el administrador puede asignar un guardia a un horario,
+- el guardia ve el servicio en `/api/mis-servicios`,
+- la asignación queda persistida,
+- un guardia bloqueado no se asigna al día bloqueado.
 
-**Dependencias**: Issue 11.
+**Dependencias**: Issue 10, Issue 12.
 
 **Evidencias o pruebas**:
-- prueba de creación de horario,
-- captura del listado de horarios,
-- validación de los datos guardados.
+- captura de la asignación,
+- consulta de `guardia_id`,
+- comprobación del servicio visible para el guardia.
 
 ---
 
-### Issue 14 - Asignar guardias a servicios y turnos
-**Título y descripción**: Asignar guardias a servicios y turnos. Vincular el personal con servicios específicos y horarios de trabajo.
+### Issue 14 - Mostrar servicios asignados al guardia
+**Título y descripción**: Conectar la pantalla del guardia con `GET /api/mis-servicios` y `GET /api/servicio/:nombre/horarios`.
 
-**Objetivo**: asegurar que cada persona esté asociada al servicio correcto y que el sistema conozca el turno asignado. El problema que resuelve es la ausencia de organización del personal por servicio.
+**Objetivo y problema que resuelve**: mostrar al usuario únicamente los servicios y turnos que puede seleccionar.
 
 **Alcance**:
-- Incluido: asociación de guardias a servicios, relación con horarios y actualización de asignaciones.
-- Excluido: carga masiva automática, optimización compleja y sistemas externos.
+- Incluido: carga de servicios asignados, consulta de horarios del servicio y selección del turno.
+- Excluido: visualización de servicios de otros guardias y asignación desde el perfil guardia.
 
 **Criterios de aceptación**:
-- un guardia puede asignarse a un servicio,
-- un servicio puede tener varios guardias,
-- las asignaciones quedan visibles y persistidas.
+- la lista muestra los servicios asignados al usuario autenticado,
+- al elegir un servicio se cargan sus horarios,
+- un guardia sin asignaciones recibe una lista vacía clara.
 
-**Dependencias**: Issue 10, Issue 11, Issue 13.
+**Dependencias**: Issue 13.
 
 **Evidencias o pruebas**:
-- prueba de asignación,
-- validación de la relación en base de datos,
-- comprobación del listado asociado.
+- captura de la pantalla con servicios,
+- prueba con guardia asignado,
+- prueba con guardia sin asignaciones.
 
 ---
 
-### Issue 15 - Obtener ubicación del dispositivo del guardia
-**Título y descripción**: Obtener ubicación del dispositivo del guardia. Capturar la geolocalización actual del navegador para compararla con la ubicación del servicio.
+### Issue 15 - Obtener y enviar la geolocalización actual
+**Título y descripción**: Usar `navigator.geolocation` en `public/js/app.js` para enviar latitud y longitud al registrar el turno.
 
-**Objetivo**: validar que el guardia se encuentra físicamente en el lugar correcto al registrar su ingreso o salida. El problema que resuelve es la falta de verificación física real de la presencia del guardia.
+**Objetivo y problema que resuelve**: aportar la ubicación real del dispositivo para validar la presencia en el servicio.
 
 **Alcance**:
-- Incluido: acceso a geolocalización, permiso del navegador, obtención de latitud/longitud y envío al backend.
-- Excluido: mapas, seguimiento continuo y geofencing avanzado.
+- Incluido: solicitud de permiso, lectura de coordenadas, manejo de error y envío al endpoint de guardias.
+- Excluido: mapa, rastreo continuo, historial de recorridos y geofencing avanzado.
 
 **Criterios de aceptación**:
-- el navegador solicita permiso de ubicación,
-- se obtiene la coordenada actual,
-- la app puede enviar esos datos para validación.
+- el navegador solicita permiso,
+- la app obtiene latitud y longitud cuando el permiso es concedido,
+- se informa claramente si el permiso es denegado,
+- las coordenadas se envían junto con el servicio y horario.
 
-**Dependencias**: Issue 12, Issue 8.
+**Dependencias**: Issue 11, Issue 14.
 
 **Evidencias o pruebas**:
-- captura del permiso del navegador,
-- datos de latitud y longitud obtenidos,
-- verificación del envío al backend.
+- captura del permiso,
+- prueba con ubicación válida,
+- prueba con permiso denegado.
 
 ---
 
-### Issue 16 - Registrar ingreso del guardia
-**Título y descripción**: Registrar ingreso del guardia. Crear la lógica para registrar la entrada a un servicio validando ubicación, horario y disponibilidad.
+### Issue 16 - Validar distancia máxima del servicio
+**Título y descripción**: Aplicar el cálculo de distancia entre la posición del guardia y las coordenadas del local, rechazando distancias mayores a 100 metros.
 
-**Objetivo**: asegurar que el ingreso quede documentado y solo pueda realizarse bajo condiciones correctas. El problema que resuelve es la falta de control del ingreso al servicio.
+**Objetivo y problema que resuelve**: evitar ingresos registrados desde ubicaciones que no corresponden al servicio seleccionado.
 
 **Alcance**:
-- Incluido: validación de servicio, cálculo de distancia, comprobación de turno y registro de ingreso con timestamp.
-- Excluido: foto obligatoria, análisis de desempeño y validaciones externas complejas.
+- Incluido: función `calcularDistanciaMetros`, comparación con 100 m y respuesta de rechazo con distancia informada.
+- Excluido: radio configurable por usuario, seguimiento en vivo y mapas.
 
 **Criterios de aceptación**:
-- un ingreso válido queda guardado,
-- un ingreso fuera de lugar se rechaza,
-- la marca de tiempo y el servicio quedan registrados.
+- una ubicación dentro del radio puede continuar,
+- una ubicación mayor a 100 m recibe 403,
+- el mensaje incluye la distancia aproximada,
+- no se crea registro cuando la validación falla.
 
-**Dependencias**: Issue 13, Issue 14, Issue 15.
+**Dependencias**: Issue 15.
 
 **Evidencias o pruebas**:
-- pruebas de ingreso correcto e incorrecto,
-- captura del registro generado,
-- validación de distancia y horario.
+- prueba con coordenadas dentro del radio,
+- prueba con coordenadas fuera del radio,
+- consulta de registros para confirmar que no se guardó el rechazo.
 
 ---
 
-### Issue 17 - Registrar egreso del guardia
-**Título y descripción**: Registrar egreso del guardia. Permitir cerrar el servicio activo con la hora de salida y las validaciones necesarias.
+### Issue 17 - Validar horario, capacidad y selección del turno
+**Título y descripción**: Validar en `POST /api/guardias` que el horario elegido corresponda al día, no esté completo y no comience más de 90 minutos después del intento.
 
-**Objetivo**: completar el ciclo del turno y evitar dejar servicios activos sin cierre. El problema que resuelve es la falta de cierre correcto del servicio.
+**Objetivo y problema que resuelve**: impedir ingresos en turnos inválidos, llenos o demasiado alejados de su horario.
 
 **Alcance**:
-- Incluido: validación de servicio activo, registro de egreso, actualización del estado del turno y timestamp de salida.
-- Excluido: cierre forzado por administrador, reportes complejos y notificaciones avanzadas.
+- Incluido: horario del día, `horario_id`, capacidad de guardias y tolerancia de 90 minutos.
+- Excluido: sanciones por tardanza, liquidación de horas y planificación automática.
+
+**Criterios de aceptación**:
+- un horario inexistente para el día se rechaza,
+- un horario completo se rechaza,
+- un ingreso con más de 90 minutos de anticipación se rechaza,
+- un horario válido puede continuar hacia el registro.
+
+**Dependencias**: Issue 12, Issue 14.
+
+**Evidencias o pruebas**:
+- pruebas de turno válido, inválido y completo,
+- prueba de anticipación mayor a 90 minutos,
+- respuestas de error documentadas.
+
+---
+
+### Issue 18 - Registrar el ingreso del guardia
+**Título y descripción**: Crear el registro de ingreso mediante `guardarRegistro` con usuario, servicio, horario, coordenadas, foto opcional y estado horario.
+
+**Objetivo y problema que resuelve**: dejar evidencia persistente de que un guardia inició un turno bajo las validaciones definidas.
+
+**Alcance**:
+- Incluido: inserción del registro tipo `ingreso`, timestamp, horario seleccionado, coordenadas y diferencia horaria.
+- Excluido: edición directa por el guardia y cierre automático del turno.
+
+**Criterios de aceptación**:
+- el ingreso válido responde con un id,
+- la fila guarda usuario, servicio, hora y horario,
+- el registro comienza sin `egreso_timestamp`,
+- la interfaz informa que el ingreso fue registrado.
+
+**Dependencias**: Issue 16, Issue 17.
+
+**Evidencias o pruebas**:
+- prueba de ingreso exitoso,
+- consulta de la fila creada,
+- captura del mensaje de confirmación.
+
+---
+
+### Issue 19 - Impedir dos servicios activos
+**Título y descripción**: Aplicar `tieneServicioActivo` y `tieneServicioActivoPorNombreDni` antes de aceptar un nuevo ingreso.
+
+**Objetivo y problema que resuelve**: evitar que un guardia figure simultáneamente en dos servicios sin haber cerrado el primero.
+
+**Alcance**:
+- Incluido: búsqueda de registros sin egreso y rechazo del segundo ingreso.
+- Excluido: reasignación automática y cierre administrativo en esta validación.
+
+**Criterios de aceptación**:
+- un guardia con registro activo recibe error 400,
+- el mensaje informa el servicio activo,
+- no se inserta un segundo registro abierto.
+
+**Dependencias**: Issue 18.
+
+**Evidencias o pruebas**:
+- dos intentos consecutivos de ingreso,
+- respuesta del segundo intento,
+- conteo de registros abiertos antes y después.
+
+---
+
+### Issue 20 - Registrar el egreso del guardia
+**Título y descripción**: Completar el registro activo con `completarRegistro` al recibir un egreso válido.
+
+**Objetivo y problema que resuelve**: cerrar el turno y guardar la hora y ubicación de salida para completar la trazabilidad.
+
+**Alcance**:
+- Incluido: búsqueda del activo, timestamp de egreso, coordenadas, foto opcional y diferencia frente al horario final.
+- Excluido: egreso sin autenticación y cierre de servicios ajenos al usuario.
 
 **Criterios de aceptación**:
 - un guardia con servicio activo puede registrar egreso,
-- un guardia sin servicio activo recibe error,
-- el registro queda completo con fecha y hora de salida.
+- un guardia sin servicio activo recibe error 400,
+- `egreso_timestamp` queda guardado,
+- el registro deja de aparecer como activo.
 
-**Dependencias**: Issue 16.
+**Dependencias**: Issue 18, Issue 19.
 
 **Evidencias o pruebas**:
-- prueba de egreso válido e inválido,
-- captura del registro completado,
-- comprobación del estado final del servicio.
+- prueba de egreso válido,
+- prueba sin servicio activo,
+- consulta del registro antes y después del egreso.
 
 ---
 
-### Issue 18 - Validar servicios activos y evitar duplicados
-**Título y descripción**: Validar servicios activos y evitar duplicados. Impedir que un guardia tenga más de un servicio activo al mismo tiempo.
+### Issue 21 - Mostrar servicios activos y registros al administrador
+**Título y descripción**: Conectar el panel con `GET /api/admin/activos`, `GET /api/admin/registros` y `GET /api/admin/registros/:id`.
 
-**Objetivo**: evitar inconsistencias operativas y garantizar que cada guardia esté involucrado en un único turno activo válido. El problema que resuelve es la posibilidad de tener dos turnos simultáneos.
+**Objetivo y problema que resuelve**: permitir supervisar quién está trabajando, qué turnos ya terminaron y qué datos tiene cada registro.
 
 **Alcance**:
-- Incluido: búsqueda de servicio activo, validación de duplicados y bloqueo del ingreso si ya existe uno activo.
-- Excluido: prioridad entre servicios, excepciones complejas y reglas de negocio avanzadas.
+- Incluido: listado de activos, historial, detalle por registro y búsqueda visual básica.
+- Excluido: exportación a Excel/PDF y analítica avanzada.
 
 **Criterios de aceptación**:
-- si ya existe un servicio activo, el nuevo ingreso se bloquea,
-- el sistema responde con un mensaje claro,
-- no se genera un segundo registro activo para el mismo guardia.
+- el admin visualiza los servicios sin egreso,
+- el historial muestra guardia, servicio, ingreso y egreso,
+- el detalle permite revisar un registro específico,
+- un guardia no puede consultar estos endpoints.
 
-**Dependencias**: Issue 16.
+**Dependencias**: Issue 20, Issue 7.
 
 **Evidencias o pruebas**:
-- prueba de doble ingreso activo,
-- captura del mensaje de error,
-- comprobación de que no se guarda una segunda entrada.
+- captura de activos e historial,
+- prueba de detalle,
+- prueba de acceso con rol guardia.
 
 ---
 
-### Issue 19 - Validar horario y tolerancia del turno
-**Título y descripción**: Validar horario y tolerancia del turno. Comparar la hora real del registro con el horario definido para el servicio.
+### Issue 22 - Completar o eliminar registros desde administración
+**Título y descripción**: Implementar las acciones administrativas `POST /api/admin/registros/:id/completar` y `POST /api/admin/registros/delete`.
 
-**Objetivo**: controlar la puntualidad y evitar registros que se hagan fuera de la ventana esperada. El problema que resuelve es la ausencia de validación del cumplimiento del horario.
+**Objetivo y problema que resuelve**: corregir registros operativos incompletos o eliminar datos seleccionados cuando el administrador lo justifica.
 
 **Alcance**:
-- Incluido: comparación entre hora actual y horario del servicio, validación según horario y mensajes de temprano o tardío.
-- Excluido: penalizaciones complejas, análisis de cumplimiento a largo plazo y lógica de planilla.
+- Incluido: completar un registro, eliminar registros seleccionados y actualizar el listado.
+- Excluido: auditoría avanzada de quién borró, recuperación de eliminados y edición libre de timestamps.
 
 **Criterios de aceptación**:
-- se acepta un ingreso dentro del horario permitido,
-- se reconoce si llegó temprano o tarde,
-- el sistema rechaza o acepta según la regla definida.
+- el admin puede completar un registro pendiente,
+- puede eliminar solo los ids seleccionados,
+- el historial se actualiza después de cada operación,
+- un guardia no puede ejecutar estas acciones.
 
-**Dependencias**: Issue 13, Issue 16.
+**Dependencias**: Issue 21.
 
 **Evidencias o pruebas**:
-- pruebas de ingreso temprano, puntual y tardío,
-- validación del mensaje devuelto,
-- comprobación del registro generado o rechazado.
+- prueba de completar registro,
+- prueba de eliminación seleccionada,
+- consulta antes y después de cada acción.
 
 ---
 
-### Issue 20 - Crear listado de registros para administración
-**Título y descripción**: Crear listado de registros para administración. Mostrar los ingresos y egresos registrados para supervisar la actividad del personal.
+### Issue 23 - Implementar notificaciones pendientes
+**Título y descripción**: Conectar `GET /api/notificaciones` y `POST /api/notificaciones/leidas` para mostrar y marcar avisos del guardia.
 
-**Objetivo**: permitir que el administrador revise el historial sin consultar la base manualmente. El problema que resuelve es la falta de trazabilidad y control operativo.
+**Objetivo y problema que resuelve**: informar cambios operativos al usuario dentro de la aplicación y evitar que los avisos pendientes se pierdan.
 
 **Alcance**:
-- Incluido: listado de registros, información de servicio y usuario, estado de ingreso y egreso y acceso desde la administración.
-- Excluido: exportación a Excel, reportes complejos y filtros avanzados.
+- Incluido: consulta de hasta 50 notificaciones pendientes y marcado por usuario autenticado.
+- Excluido: SMS, correo, push móvil y notificaciones de terceros.
 
 **Criterios de aceptación**:
-- el administrador puede ver los registros,
-- la información incluye guardia, servicio y fechas,
-- cada registro presenta su estado de forma legible.
+- el guardia ve solo sus notificaciones no leídas,
+- puede marcarlas como leídas,
+- una notificación leída no vuelve a aparecer como pendiente.
 
-**Dependencias**: Issue 17, Issue 9.
+**Dependencias**: Issue 5, Issue 14.
 
 **Evidencias o pruebas**:
-- captura del listado de registros,
-- validación de la información mostrada,
-- comprobación de acceso desde el panel administrativo.
+- creación de una notificación de prueba,
+- captura de la bandeja,
+- consulta antes y después de marcar como leída.
 
 ---
 
-### Issue 21 - Crear notificaciones de asignación y cambios
-**Título y descripción**: Crear notificaciones de asignación y cambios. Avisar al guardia cuando se le asigna o retira un servicio.
+### Issue 24 - Visualizar calendario mensual y valores del servicio
+**Título y descripción**: Conectar el panel con `GET /api/admin/calendario/:servicioId` y la actualización de valores mensuales del servicio.
 
-**Objetivo**: mejorar la comunicación operativa y mantener informado al personal. El problema que resuelve es la falta de avisos sobre cambios relevantes.
-
-**Alcance**:
-- Incluido: creación de notificaciones, asociación con el usuario, visualización en la interfaz y marcado como leídas.
-- Excluido: SMS, correo electrónico y push para dispositivos móviles.
-
-**Criterios de aceptación**:
-- se genera una notificación al cambiar la asignación,
-- el usuario puede verla desde su panel,
-- la notificación queda asociada al guardia correspondiente.
-
-**Dependencias**: Issue 14.
-
-**Evidencias o pruebas**:
-- prueba de creación de notificación,
-- captura de la vista de notificaciones,
-- validación de lectura y almacenamiento.
-
----
-
-### Issue 22 - Crear calendario mensual por servicio
-**Título y descripción**: Crear calendario mensual por servicio. Mostrar los registros agrupados por fecha en una vista mensual.
-
-**Objetivo**: facilitar la supervisión por período y dar una lectura visual clara de la actividad del servicio. El problema que resuelve es la falta de visualización temporal del trabajo por servicio.
+**Objetivo y problema que resuelve**: consultar los registros agrupados por mes y mantener los valores básicos asociados a cada servicio para la supervisión administrativa.
 
 **Alcance**:
-- Incluido: calendario mensual, agrupación por fecha, registros por servicio y vista general del mes.
-- Excluido: reportes complejos, exportación PDF y gráficos avanzados.
+- Incluido: selector de servicio y mes, registros del período, valores de horas de sueldo/servicio y actualización administrativa.
+- Excluido: liquidación de sueldos, pagos, reportes externos y dashboard predictivo.
 
 **Criterios de aceptación**:
-- el administrador puede ver la actividad por día,
-- las fechas muestran los registros relevantes,
-- la vista ayuda a controlar el servicio en el mes.
+- el admin puede seleccionar un servicio y mes,
+- el calendario muestra ingresos y egresos del período,
+- los valores mensuales se guardan y vuelven a cargarse,
+- la información corresponde al servicio elegido.
 
-**Dependencias**: Issue 20, Issue 9.
+**Dependencias**: Issue 21.
 
 **Evidencias o pruebas**:
 - captura del calendario mensual,
-- comprobación de registros por fecha,
-- validación de navegación del mes.
+- prueba con dos meses distintos,
+- comprobación de persistencia de valores.
 
 ---
 
-### Issue 23 - Agregar métricas básicas de cumplimiento
-**Título y descripción**: Agregar métricas básicas de cumplimiento. Calcular indicadores simples sobre registros y rendimiento del servicio.
+## 3.3 Validación final de las issues
 
-**Objetivo**: aportar medición de calidad y facilitar la evaluación del desempeño del sistema. El problema que resuelve es la ausencia de indicadores claros de cumplimiento.
-
-**Alcance**:
-- Incluido: conteo de registros, indicadores de cumplimiento, métricas básicas por servicio y visualización simple.
-- Excluido: dashboards avanzados, análisis predictivo e inteligencia artificial.
-
-**Criterios de aceptación**:
-- los indicadores se calculan con datos reales,
-- el administrador puede visualizarlos,
-- reflejan claramente la actividad del sistema.
-
-**Dependencias**: Issue 20, Issue 22.
-
-**Evidencias o pruebas**:
-- captura de métricas,
-- validación de los valores calculados,
-- comprobación de consistencia con los registros reales.
-
----
-
-### Issue 24 - Mejorar mensajes de validación y errores
-**Título y descripción**: Mejorar mensajes de validación y errores. Ajustar los mensajes del sistema para que sean claros cuando una acción es rechazada.
-
-**Objetivo**: mejorar la experiencia del usuario y reducir la confusión frente a errores de negocio o validación. El problema que resuelve es la falta de feedback claro y comprensible.
-
-**Alcance**:
-- Incluido: mensajes de error claros, mensajes de éxito, validación visible en pantallas y mensajes críticos.
-- Excluido: internacionalización, mensajes multilenguaje y librerías visuales complejas.
-
-**Criterios de aceptación**:
-- cada error relevante muestra un mensaje entendible,
-- el usuario sabe qué acción debe seguir,
-- los mensajes son consistentes en toda la aplicación.
-
-**Dependencias**: Issue 16, Issue 17, Issue 19.
-
-**Evidencias o pruebas**:
-- captura de mensajes de error,
-- validación del contenido con casos reales,
-- prueba de flujo completo con errores esperados.
-
----
-
-### Issue 25 - Realizar pruebas del flujo principal
-**Título y descripción**: Realizar pruebas del flujo principal. Validar el funcionamiento completo del sistema desde login hasta registro y administración.
-
-**Objetivo**: comprobar que el proyecto cumple con su función principal y que el flujo central funciona de forma integrada. El problema que resuelve es la falta de validación final del sistema completo.
-
-**Alcance**:
-- Incluido: login, gestión básica, servicios y horarios, ingreso y egreso, administración y seguimiento.
-- Excluido: pruebas de carga extrema, seguridad avanzada y nuevas funcionalidades no contempladas.
-
-**Criterios de aceptación**:
-- se prueba el flujo principal completo,
-- no quedan errores críticos en la ruta principal,
-- los resultados se documentan para cierre del proyecto.
-
-**Dependencias**: todas las issues anteriores.
-
-**Evidencias o pruebas**:
-- checklist de validación,
-- capturas del flujo principal,
-- resultados de pruebas funcionales.
-
----
-
-### Issue 26 - Corregir errores y dejar la versión estable
-**Título y descripción**: Corregir errores y dejar la versión estable. Resolver defectos detectados en pruebas y estabilizar la aplicación para uso real.
-
-**Objetivo**: evitar que el sistema quede con fallas funcionales que afecten la operación diaria. El problema que resuelve es la presencia de errores que pueden interrumpir el flujo principal.
-
-**Alcance**:
-- Incluido: corrección de errores críticos, ajuste de validaciones, mejoras de flujo y estabilización del sistema.
-- Excluido: nuevas funcionalidades, refactors grandes no necesarios y cambios ajenos al alcance del proyecto.
-
-**Criterios de aceptación**:
-- los errores críticos se corrigen,
-- la aplicación funciona de forma estable,
-- el flujo principal queda consistente y usable.
-
-**Dependencias**: Issue 25.
-
-**Evidencias o pruebas**:
-- listado de errores corregidos,
-- validación final del funcionamiento,
-- captura de pruebas repetidas exitosas.
-
----
-
-### Issue 27 - Documentar la versión final del proyecto
-**Título y descripción**: Documentar la versión final del proyecto. Dejar la documentación del sistema para que pueda mantenerse y evolucionar.
-
-**Objetivo**: cerrar el proyecto con una referencia clara para mantenimiento y futuras mejoras. El problema que resuelve es la ausencia de documentación útil para continuar o entregar el sistema.
-
-**Alcance**:
-- Incluido: README final, explicación del flujo general, referencia a la estructura del repositorio y documentación básica de uso.
-- Excluido: manual técnico avanzado, documentación legal y despliegue profesional en producción.
-
-**Criterios de aceptación**:
-- la documentación final queda disponible dentro del repositorio,
-- cualquier persona puede entender el objetivo del sistema,
-- la información es clara y útil para futuras mejoras.
-
-**Dependencias**: Issue 26.
-
-**Evidencias o pruebas**:
-- archivo README final,
-- revisión del contenido,
-- comprobación de que explica los pasos principales del proyecto.
-
----
-
-## 3. Conclusión
-
-Estas issues están pensadas para construir el proyecto de forma incremental, priorizando primero la base técnica y luego la lógica funcional. Cada tarea cuenta con objetivo claro, alcance definido, dependencias, criterios de aceptación y evidencias de validación, por lo que el sistema puede desarrollarse sin perder control del alcance ni de la calidad.
+La issue final de cada bloque debe presentar evidencias verificables en el repositorio: capturas de las pantallas, respuestas de los endpoints, consultas de persistencia y resultados de los casos válidos e inválidos. La aceptación general del Paso 3 se alcanza cuando las 24 issues están documentadas, cada una tiene sus dependencias identificadas y el flujo completo de autenticación, asignación, ingreso, egreso y supervisión puede probarse sin salir del alcance del sistema.
