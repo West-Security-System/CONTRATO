@@ -1,578 +1,866 @@
-# Paso 3 - Diseño de las Issues del Repositorio
+# Paso 3 - Issues de los repositorios Frontend y Backend
 
-## 3.1 Objetivo del paso
+## 3.1 Objetivo y organización
 
-Las issues representan cambios concretos para construir West Security Company. Están ordenadas según sus dependencias y prioridades, desde la persistencia y el acceso hasta la operación diaria del guardia y la supervisión administrativa. Cada issue se limita a una parte verificable del sistema y no incorpora funcionalidades fuera del alcance definido en el Paso 2.
+El proyecto se divide en dos repositorios de GitHub:
 
-Las issues 1 a 7 tienen prioridad alta porque habilitan la base, la persistencia y el acceso seguro. Las issues 8 a 20 tienen prioridad alta porque construyen el flujo operativo de usuarios, servicios, turnos e ingreso/egreso. Las issues 21 a 24 tienen prioridad media porque agregan supervisión, correcciones administrativas y consulta mensual sobre un flujo ya funcional.
+- `west-security-frontend`: interfaz web para administradores y guardias.
+- `west-security-backend`: API, autenticación, reglas operativas y persistencia.
 
-## 3.2 Issues del proyecto
+Se definen 26 issues para cada repositorio, 52 en total. El número es compartido: `frontend#N` y `backend#N` forman el mismo entregable coordinado. Una issue se cierra únicamente cuando su parte está implementada, probada y conectada con la issue complementaria.
 
-### Issue 1 - Inicializar la base SQLite del sistema
-**Título y descripción**: Crear la base local `west_control.db` y habilitar su carga al iniciar el servidor.
+El backend es la fuente de verdad para permisos, estados, fechas, distancia y persistencia. El frontend presenta estados y errores recibidos de la API; no reemplaza las validaciones del servidor. Todo endpoint debe documentar método, ruta, autenticación, payload, respuesta y errores.
 
-**Objetivo y problema que resuelve**: establecer la persistencia necesaria para no perder usuarios, servicios, horarios y registros cuando se reinicia la aplicación.
+## 3.2 Issues del repositorio `west-security-frontend`
 
-**Alcance**:
-- Incluido: inicialización de SQLite/sql.js, creación de la carpeta `data` y activación de claves foráneas.
-- Excluido: datos de prueba, pantallas y consultas específicas de cada módulo.
+Cada issue incluye objetivo, trabajo, aceptación, dependencias y evidencia. La issue backend del mismo número define el contrato que debe consumirse.
+
+### Frontend Issue 1 - Inicializar la aplicación web
+**Objetivo**: crear una base ejecutable y mantenible para el cliente.
+
+**Trabajo**: configurar HTML/CSS/JavaScript, scripts, carpetas, variables de entorno y URL de API.
 
 **Criterios de aceptación**:
-- la base se crea automáticamente si no existe,
-- el servidor inicia sin error cuando la base ya existe,
-- las claves foráneas quedan activas.
+- inicia con un comando documentado,
+- separa vistas públicas y protegidas,
+- no duplica la URL del backend.
 
 **Dependencias**: ninguna.
 
-**Evidencias o pruebas**:
-- ejecución del servidor con base nueva,
-- ejecución posterior usando la misma base,
-- captura de la estructura creada.
+**Backend relacionado**: #1.
 
----
+**Evidencia**: ejecución local y captura inicial.
 
-### Issue 2 - Crear tablas de usuarios y roles
-**Título y descripción**: Crear la tabla `usuarios` con credenciales, datos personales, rol y bloqueos.
+### Frontend Issue 2 - Crear el sistema visual base
+**Objetivo**: unificar la experiencia.
 
-**Objetivo y problema que resuelve**: almacenar los dos perfiles del sistema y sus datos operativos sin usar información fija en el código.
-
-**Alcance**:
-- Incluido: campos `username`, `password`, `nombre`, `dni`, `rol`, `bloqueos` y fecha de creación.
-- Excluido: formulario de administración y permisos distintos de `admin` y `guardia`.
+**Trabajo**: estilos globales, tipografía, colores, espaciado, botones, formularios, tablas, alertas, carga, error y responsive.
 
 **Criterios de aceptación**:
-- el nombre de usuario es único,
-- el rol por defecto es `guardia`,
-- los datos obligatorios no aceptan valores vacíos.
+- controles consistentes,
+- foco visible,
+- estados vacío, carga y error,
+- uso sin desbordamiento en móvil.
 
-**Dependencias**: Issue 1.
+**Dependencias**: #1.
 
-**Evidencias o pruebas**:
-- consulta de la tabla `usuarios`,
-- inserción de un admin y un guardia,
-- prueba de rechazo de un usuario duplicado.
+**Backend relacionado**: #2.
 
----
+**Evidencia**: capturas desktop y móvil.
 
-### Issue 3 - Crear tablas de servicios, horarios y registros
-**Título y descripción**: Crear las tablas `locales`, `horarios` y `registros` con las relaciones necesarias para controlar turnos.
+### Frontend Issue 3 - Implementar cliente HTTP común
+**Objetivo**: centralizar la comunicación.
 
-**Objetivo y problema que resuelve**: representar en la base el servicio, el horario asignado y el ciclo completo de ingreso/egreso.
-
-**Alcance**:
-- Incluido: coordenadas del local, relación horario-local, usuario asignado, timestamps, datos de ubicación y estado de egreso.
-- Excluido: consultas del panel, métricas y notificaciones.
+**Trabajo**: `fetch`, cookies, JSON, timeout, errores 401/403/404/409/422/500 y error de red.
 
 **Criterios de aceptación**:
-- un horario pertenece a un servicio existente,
-- un registro pertenece a un usuario existente,
-- un registro permite guardar ingreso y egreso en la misma fila.
+- ningún módulo repite URL o manejo de errores,
+- las respuestas se convierten a mensajes utilizables.
 
-**Dependencias**: Issue 1, Issue 2.
+**Dependencias**: #1.
 
-**Evidencias o pruebas**:
-- consulta de las tres tablas,
-- inserción de un servicio con horario,
-- inserción y lectura de un registro de prueba.
+**Backend relacionado**: #3.
 
----
+**Evidencia**: pruebas de éxito, error y red.
 
-### Issue 4 - Sembrar el administrador inicial
-**Título y descripción**: Crear automáticamente el usuario administrador `westcompany` cuando no exista.
+### Frontend Issue 4 - Crear navegación y protección de vistas
+**Objetivo**: separar login, panel guardia y panel admin.
 
-**Objetivo y problema que resuelve**: permitir el primer acceso administrativo sin editar manualmente la base de datos.
-
-**Alcance**:
-- Incluido: función `seedAdmin`, hash de contraseña y creación condicional del usuario admin.
-- Excluido: recuperación de contraseña y creación automática de guardias.
+**Trabajo**: rutas, redirección por rol, ruta inexistente y protección ante recarga.
 
 **Criterios de aceptación**:
-- el usuario admin se crea una sola vez,
-- la contraseña almacenada no está en texto plano,
-- el reinicio del servidor no duplica la cuenta.
+- sin sesión vuelve al login,
+- un guardia no ve admin,
+- cada rol llega a su panel.
 
-**Dependencias**: Issue 2.
+**Dependencias**: #3.
 
-**Evidencias o pruebas**:
-- consulta de la cuenta inicial,
-- comparación de login correcto e incorrecto,
-- segundo arranque sin duplicación.
+**Backend relacionado**: #4 y #5.
 
----
+**Evidencia**: recorrido de redirecciones.
 
-### Issue 5 - Implementar inicio y cierre de sesión
-**Título y descripción**: Implementar `POST /api/login`, `POST /api/logout` y `GET /api/me`.
+### Frontend Issue 5 - Construir el formulario de login
+**Objetivo**: permitir el acceso de ambos perfiles.
 
-**Objetivo y problema que resuelve**: autenticar a administradores y guardias y permitir que la interfaz conozca la sesión actual.
-
-**Alcance**:
-- Incluido: comparación con bcrypt, creación/destrucción de sesión y devolución de datos básicos del usuario.
-- Excluido: OAuth, Google, SSO y recuperación de contraseña.
+**Trabajo**: usuario, contraseña, validación, estado de envío, `POST /api/login`, redirección y error sin filtrar datos.
 
 **Criterios de aceptación**:
-- credenciales válidas crean una sesión,
-- credenciales inválidas responden con error 401,
-- logout destruye la sesión,
-- `/api/me` devuelve el usuario autenticado.
+- no envía campos vacíos,
+- bloquea doble envío,
+- redirige por rol,
+- presenta credenciales inválidas.
 
-**Dependencias**: Issue 4.
+**Dependencias**: #3 y #4.
 
-**Evidencias o pruebas**:
-- pruebas HTTP de login válido e inválido,
-- consulta de `/api/me` antes y después del logout,
-- verificación de contraseña hasheada.
+**Backend relacionado**: #5.
 
----
+**Evidencia**: login admin, guardia e inválido.
 
-### Issue 6 - Aplicar límite de intentos de login
-**Título y descripción**: Configurar el límite de 30 intentos de autenticación en una ventana de 15 minutos.
+### Frontend Issue 6 - Implementar sesión actual y logout
+**Objetivo**: mostrar la identidad y finalizar acceso.
 
-**Objetivo y problema que resuelve**: reducir intentos automatizados de acceso sobre `/api/login`.
-
-**Alcance**:
-- Incluido: `express-rate-limit` aplicado al endpoint de login y respuesta de bloqueo.
-- Excluido: captcha, autenticación multifactor y bloqueo permanente de cuentas.
+**Trabajo**: `GET /api/me`, menú por rol, `POST /api/logout`, limpieza y redirección.
 
 **Criterios de aceptación**:
-- los primeros 30 intentos permitidos procesan normalmente,
-- los intentos posteriores dentro de la ventana responden con error,
-- el límite se aplica al login y no bloquea las consultas operativas normales.
+- sesión inválida no muestra contenido,
+- volver atrás no recupera acceso,
+- no se muestran secretos.
 
-**Dependencias**: Issue 5.
+**Dependencias**: #5.
 
-**Evidencias o pruebas**:
-- prueba automatizada o manual de múltiples intentos,
-- respuesta del límite alcanzado,
-- verificación de acceso posterior a la ventana.
+**Backend relacionado**: #6.
 
----
+**Evidencia**: flujo autenticado y posterior al logout.
 
-### Issue 7 - Proteger rutas autenticadas y administrativas
-**Título y descripción**: Aplicar `requiereAuth` y `requiereAdmin` a las rutas del sistema.
+### Frontend Issue 7 - Crear layout administrativo
+**Objetivo**: dar una estructura común al panel admin.
 
-**Objetivo y problema que resuelve**: impedir que usuarios sin sesión o guardias ejecuten operaciones administrativas.
-
-**Alcance**:
-- Incluido: protección de rutas `/api/mis-servicios`, `/api/guardias` y `/api/admin/*`.
-- Excluido: permisos por botón, nuevos roles y SSO.
+**Trabajo**: encabezado, menú, sección activa, usuario, carga, alertas y responsive.
 
 **Criterios de aceptación**:
-- una petición sin sesión recibe 401,
-- una sesión de guardia en `/api/admin/*` recibe 403,
-- una sesión admin puede acceder a sus endpoints.
+- todas las vistas comparten layout,
+- las acciones admin no aparecen para guardias.
 
-**Dependencias**: Issue 5.
+**Dependencias**: #6.
 
-**Evidencias o pruebas**:
-- pruebas con cookie ausente,
-- pruebas con sesión de guardia,
-- pruebas con sesión de administrador.
+**Backend relacionado**: #7.
 
----
+**Evidencia**: capturas de escritorio y móvil.
 
-### Issue 8 - Implementar la pantalla de login
-**Título y descripción**: Conectar `public/login.html` y `public/js/login.js` con `POST /api/login`.
+### Frontend Issue 8 - Gestionar usuarios
+**Objetivo**: ofrecer CRUD de personal.
 
-**Objetivo y problema que resuelve**: permitir que ambos perfiles ingresen desde el navegador sin usar llamadas manuales a la API.
-
-**Alcance**:
-- Incluido: campos de usuario y contraseña, envío del formulario, redirección por rol y mensaje de error.
-- Excluido: registro público y recuperación de contraseña.
+**Trabajo**: tabla, alta, edición, baja, rol, validación, confirmación y error de username duplicado.
 
 **Criterios de aceptación**:
-- el login válido redirige al panel correspondiente,
-- el login inválido muestra el error del servidor,
-- los campos obligatorios se validan antes de enviar.
+- admin completa CRUD,
+- distingue roles,
+- no puede eliminarse a sí mismo.
 
-**Dependencias**: Issue 5, Issue 7.
+**Dependencias**: #3 y #7.
 
-**Evidencias o pruebas**:
-- captura del formulario,
-- prueba de redirección admin/guardia,
-- prueba visual de credenciales inválidas.
+**Backend relacionado**: #8.
 
----
+**Evidencia**: alta, edición, error y baja.
 
-### Issue 9 - Implementar CRUD de usuarios del administrador
-**Título y descripción**: Conectar el panel con `GET/POST/PUT/DELETE /api/admin/usuarios`.
+### Frontend Issue 9 - Gestionar bloqueos de guardias
+**Objetivo**: editar días no disponibles.
 
-**Objetivo y problema que resuelve**: permitir que el administrador mantenga actualizado el personal que puede operar en el sistema.
-
-**Alcance**:
-- Incluido: listado, creación, edición, eliminación, validación de username y hash de contraseña.
-- Excluido: sueldos, legajos, licencias e importación masiva.
+**Trabajo**: cargar, marcar, desmarcar, guardar, cancelar y confirmar bloqueos.
 
 **Criterios de aceptación**:
-- el administrador puede crear, editar y eliminar un usuario,
-- un username duplicado responde 409,
-- un admin no puede eliminarse a sí mismo,
-- la contraseña nueva se guarda hasheada.
+- persisten al recargar,
+- los errores no dejan datos falsos.
 
-**Dependencias**: Issue 7.
+**Dependencias**: #8.
 
-**Evidencias o pruebas**:
-- capturas de alta, edición y baja,
-- prueba de duplicado,
-- consulta de persistencia en `usuarios`.
+**Backend relacionado**: #9.
 
----
+**Evidencia**: marcar, guardar, recargar y quitar.
 
-### Issue 10 - Implementar bloqueos de días por guardia
-**Título y descripción**: Conectar `PUT /api/admin/usuarios/:id/bloqueos` para guardar días en los que un guardia no puede ser asignado.
+### Frontend Issue 10 - Diseñar administración de servicios y coordenadas
+**Objetivo**: hacer toda la parte gráfica de locales/servicios.
 
-**Objetivo y problema que resuelve**: registrar restricciones operativas individuales antes de crear o modificar horarios.
-
-**Alcance**:
-- Incluido: edición de bloqueos, serialización en el campo `bloqueos` y visualización en el panel.
-- Excluido: licencias laborales, cálculo de vacaciones y notificaciones externas.
+**Trabajo**: CRUD de nombre, latitud y longitud, validación, confirmación y estados vacío/error.
 
 **Criterios de aceptación**:
-- el administrador puede marcar y desmarcar días,
-- los bloqueos sobreviven al reinicio,
-- la API devuelve el estado actualizado.
+- admin crea, edita y elimina,
+- se muestran coordenadas,
+- se informa duplicado o valor inválido.
 
-**Dependencias**: Issue 9.
+**Dependencias**: #3 y #7.
 
-**Evidencias o pruebas**:
-- captura del formulario de bloqueos,
-- consulta antes y después del reinicio,
-- prueba de guardado y lectura del JSON.
+**Backend relacionado**: #10.
 
----
+**Evidencia**: CRUD completo y validaciones.
 
-### Issue 11 - Implementar CRUD de servicios con coordenadas
-**Título y descripción**: Conectar el panel con `GET/POST/PUT/DELETE /api/admin/locales` para administrar servicios o locales.
+### Frontend Issue 11 - Gestionar horarios por servicio
+**Objetivo**: administrar turnos visualmente.
 
-**Objetivo y problema que resuelve**: permitir definir los lugares donde se controlará la presencia de los guardias.
-
-**Alcance**:
-- Incluido: nombre único, latitud, longitud, edición, eliminación y listado de servicios.
-- Excluido: mapas externos, geocodificación automática y seguimiento en vivo.
+**Trabajo**: selector de servicio, días, hora inicial/final, capacidad y CRUD.
 
 **Criterios de aceptación**:
-- el administrador puede crear, modificar y eliminar un servicio,
-- el nombre duplicado se rechaza,
-- latitud y longitud quedan guardadas,
-- un servicio eliminado no deja horarios huérfanos.
+- solo muestra horarios del servicio,
+- exige hora final posterior,
+- evita duplicados visuales.
 
-**Dependencias**: Issue 3, Issue 7.
+**Dependencias**: #10.
 
-**Evidencias o pruebas**:
-- prueba CRUD completa,
-- consulta de coordenadas guardadas,
-- comprobación de eliminación de relaciones por cascada.
+**Backend relacionado**: #11.
 
----
+**Evidencia**: alta, edición, rango inválido y baja.
 
-### Issue 12 - Implementar horarios por servicio
-**Título y descripción**: Conectar la creación, edición, eliminación y consulta de horarios asociados a cada local.
+### Frontend Issue 12 - Asignar guardias a horarios
+**Objetivo**: vincular personal y turnos.
 
-**Objetivo y problema que resuelve**: definir cuándo puede registrarse un turno y qué guardias están asociados a cada servicio.
-
-**Alcance**:
-- Incluido: `GET/POST/PUT/DELETE` de horarios, hora inicial/final y rango de días.
-- Excluido: planificación automática y sincronización con calendarios externos.
+**Trabajo**: selector, asignación, desasignación y mensajes de bloqueo/conflicto.
 
 **Criterios de aceptación**:
-- un horario queda asociado al servicio elegido,
-- se pueden editar horas y días,
-- se puede eliminar un horario,
-- la consulta devuelve solo horarios del servicio indicado.
+- lista solo guardias,
+- refleja el cambio al recargar,
+- muestra rechazos del servidor.
 
-**Dependencias**: Issue 11.
+**Dependencias**: #9 y #11.
 
-**Evidencias o pruebas**:
-- captura del formulario de horario,
-- pruebas de alta, edición y baja,
-- consulta del endpoint por servicio.
+**Backend relacionado**: #12.
 
----
+**Evidencia**: asignación válida y conflictos.
 
-### Issue 13 - Asignar guardias a horarios
-**Título y descripción**: Permitir asociar un `guardia_id` a cada horario desde el panel administrativo.
+### Frontend Issue 13 - Crear dashboard operativo admin
+**Objetivo**: resumir la operación.
 
-**Objetivo y problema que resuelve**: asegurar que el sistema conozca qué persona está habilitada para cubrir cada turno.
-
-**Alcance**:
-- Incluido: selector de guardia, asociación horario-usuario y visualización de asignaciones.
-- Excluido: asignación automática, optimización de dotación y recursos humanos.
+**Trabajo**: activos, registros recientes, alertas, enlaces, refresco y estados vacío/error.
 
 **Criterios de aceptación**:
-- el administrador puede asignar un guardia a un horario,
-- el guardia ve el servicio en `/api/mis-servicios`,
-- la asignación queda persistida,
-- un guardia bloqueado no se asigna al día bloqueado.
+- identifica guardia, servicio, fecha y estado,
+- no muestra datos mientras cargan.
 
-**Dependencias**: Issue 10, Issue 12.
+**Dependencias**: #7 y #12.
 
-**Evidencias o pruebas**:
-- captura de la asignación,
-- consulta de `guardia_id`,
-- comprobación del servicio visible para el guardia.
+**Backend relacionado**: #13.
 
----
+**Evidencia**: con datos, sin datos y error.
 
-### Issue 14 - Mostrar servicios asignados al guardia
-**Título y descripción**: Conectar la pantalla del guardia con `GET /api/mis-servicios` y `GET /api/servicio/:nombre/horarios`.
+### Frontend Issue 14 - Mostrar servicios asignados al guardia
+**Objetivo**: permitir seleccionar un turno propio.
 
-**Objetivo y problema que resuelve**: mostrar al usuario únicamente los servicios y turnos que puede seleccionar.
-
-**Alcance**:
-- Incluido: carga de servicios asignados, consulta de horarios del servicio y selección del turno.
-- Excluido: visualización de servicios de otros guardias y asignación desde el perfil guardia.
+**Trabajo**: `GET /api/mis-servicios`, horarios, selector y estado sin asignaciones.
 
 **Criterios de aceptación**:
-- la lista muestra los servicios asignados al usuario autenticado,
-- al elegir un servicio se cargan sus horarios,
-- un guardia sin asignaciones recibe una lista vacía clara.
+- no muestra asignaciones ajenas,
+- actualiza horarios,
+- no permite continuar sin turno.
 
-**Dependencias**: Issue 13.
+**Dependencias**: #6 y #12.
 
-**Evidencias o pruebas**:
-- captura de la pantalla con servicios,
-- prueba con guardia asignado,
-- prueba con guardia sin asignaciones.
+**Backend relacionado**: #14.
 
----
+**Evidencia**: guardia asignado y no asignado.
 
-### Issue 15 - Obtener y enviar la geolocalización actual
-**Título y descripción**: Usar `navigator.geolocation` en `public/js/app.js` para enviar latitud y longitud al registrar el turno.
+### Frontend Issue 15 - Integrar geolocalización del navegador
+**Objetivo**: obtener ubicación real antes de operar.
 
-**Objetivo y problema que resuelve**: aportar la ubicación real del dispositivo para validar la presencia en el servicio.
-
-**Alcance**:
-- Incluido: solicitud de permiso, lectura de coordenadas, manejo de error y envío al endpoint de guardias.
-- Excluido: mapa, rastreo continuo, historial de recorridos y geofencing avanzado.
+**Trabajo**: permiso, coordenadas, precisión, espera, denegación y error de compatibilidad.
 
 **Criterios de aceptación**:
-- el navegador solicita permiso,
-- la app obtiene latitud y longitud cuando el permiso es concedido,
-- se informa claramente si el permiso es denegado,
-- las coordenadas se envían junto con el servicio y horario.
+- no inventa coordenadas,
+- evita doble envío,
+- indica cómo resolver el permiso.
 
-**Dependencias**: Issue 11, Issue 14.
+**Dependencias**: #14.
 
-**Evidencias o pruebas**:
-- captura del permiso,
-- prueba con ubicación válida,
-- prueba con permiso denegado.
+**Backend relacionado**: #15.
 
----
+**Evidencia**: permiso concedido, denegado y error.
 
-### Issue 16 - Validar distancia máxima del servicio
-**Título y descripción**: Aplicar el cálculo de distancia entre la posición del guardia y las coordenadas del local, rechazando distancias mayores a 100 metros.
+### Frontend Issue 16 - Implementar formulario de ingreso
+**Objetivo**: enviar visualmente el ingreso.
 
-**Objetivo y problema que resuelve**: evitar ingresos registrados desde ubicaciones que no corresponden al servicio seleccionado.
-
-**Alcance**:
-- Incluido: función `calcularDistanciaMetros`, comparación con 100 m y respuesta de rechazo con distancia informada.
-- Excluido: radio configurable por usuario, seguimiento en vivo y mapas.
+**Trabajo**: resumen de servicio/horario, ubicación, `POST /api/guardias`, carga, éxito y errores de radio/turno.
 
 **Criterios de aceptación**:
-- una ubicación dentro del radio puede continuar,
-- una ubicación mayor a 100 m recibe 403,
-- el mensaje incluye la distancia aproximada,
-- no se crea registro cuando la validación falla.
+- exige selección y ubicación,
+- muestra hora y servicio aceptados,
+- conserva datos ante rechazo.
 
-**Dependencias**: Issue 15.
+**Dependencias**: #14 y #15.
 
-**Evidencias o pruebas**:
-- prueba con coordenadas dentro del radio,
-- prueba con coordenadas fuera del radio,
-- consulta de registros para confirmar que no se guardó el rechazo.
+**Backend relacionado**: #16.
 
----
+**Evidencia**: válido, fuera de 100 m e inválido.
 
-### Issue 17 - Validar horario, capacidad y selección del turno
-**Título y descripción**: Validar en `POST /api/guardias` que el horario elegido corresponda al día, no esté completo y no comience más de 90 minutos después del intento.
+### Frontend Issue 17 - Mostrar turno activo y bloquear segundo ingreso
+**Objetivo**: representar el estado real del guardia.
 
-**Objetivo y problema que resuelve**: impedir ingresos en turnos inválidos, llenos o demasiado alejados de su horario.
-
-**Alcance**:
-- Incluido: horario del día, `horario_id`, capacidad de guardias y tolerancia de 90 minutos.
-- Excluido: sanciones por tardanza, liquidación de horas y planificación automática.
+**Trabajo**: consulta de activo, panel, deshabilitación y sincronización después de ingreso/recarga.
 
 **Criterios de aceptación**:
-- un horario inexistente para el día se rechaza,
-- un horario completo se rechaza,
-- un ingreso con más de 90 minutos de anticipación se rechaza,
-- un horario válido puede continuar hacia el registro.
+- muestra servicio y hora,
+- oculta nuevo ingreso,
+- maneja el 409 sin estado falso.
 
-**Dependencias**: Issue 12, Issue 14.
+**Dependencias**: #16.
 
-**Evidencias o pruebas**:
-- pruebas de turno válido, inválido y completo,
-- prueba de anticipación mayor a 90 minutos,
-- respuestas de error documentadas.
+**Backend relacionado**: #17.
 
----
+**Evidencia**: activo, recarga y segundo intento.
 
-### Issue 18 - Registrar el ingreso del guardia
-**Título y descripción**: Crear el registro de ingreso mediante `guardarRegistro` con usuario, servicio, horario, coordenadas, foto opcional y estado horario.
+### Frontend Issue 18 - Implementar formulario de egreso
+**Objetivo**: cerrar el turno activo.
 
-**Objetivo y problema que resuelve**: dejar evidencia persistente de que un guardia inició un turno bajo las validaciones definidas.
-
-**Alcance**:
-- Incluido: inserción del registro tipo `ingreso`, timestamp, horario seleccionado, coordenadas y diferencia horaria.
-- Excluido: edición directa por el guardia y cierre automático del turno.
+**Trabajo**: confirmación, ubicación, envío, espera, éxito y error sin activo.
 
 **Criterios de aceptación**:
-- el ingreso válido responde con un id,
-- la fila guarda usuario, servicio, hora y horario,
-- el registro comienza sin `egreso_timestamp`,
-- la interfaz informa que el ingreso fue registrado.
+- aparece solo con activo,
+- muestra hora recibida,
+- lo quita del estado activo al cerrar.
 
-**Dependencias**: Issue 16, Issue 17.
+**Dependencias**: #17.
 
-**Evidencias o pruebas**:
-- prueba de ingreso exitoso,
-- consulta de la fila creada,
-- captura del mensaje de confirmación.
+**Backend relacionado**: #18.
 
----
+**Evidencia**: egreso válido y sin turno.
 
-### Issue 19 - Impedir dos servicios activos
-**Título y descripción**: Aplicar `tieneServicioActivo` y `tieneServicioActivoPorNombreDni` antes de aceptar un nuevo ingreso.
+### Frontend Issue 19 - Crear historial del guardia
+**Objetivo**: mostrar actividad propia.
 
-**Objetivo y problema que resuelve**: evitar que un guardia figure simultáneamente en dos servicios sin haber cerrado el primero.
-
-**Alcance**:
-- Incluido: búsqueda de registros sin egreso y rechazo del segundo ingreso.
-- Excluido: reasignación automática y cierre administrativo en esta validación.
+**Trabajo**: `GET /api/mis-registros`, servicio, ingreso, egreso, estado, límite y vacío.
 
 **Criterios de aceptación**:
-- un guardia con registro activo recibe error 400,
-- el mensaje informa el servicio activo,
-- no se inserta un segundo registro abierto.
+- nunca muestra otro usuario,
+- diferencia abiertos y cerrados.
 
-**Dependencias**: Issue 18.
+**Dependencias**: #18.
 
-**Evidencias o pruebas**:
-- dos intentos consecutivos de ingreso,
-- respuesta del segundo intento,
-- conteo de registros abiertos antes y después.
+**Backend relacionado**: #19.
 
----
+**Evidencia**: activo, cerrado y vacío.
 
-### Issue 20 - Registrar el egreso del guardia
-**Título y descripción**: Completar el registro activo con `completarRegistro` al recibir un egreso válido.
+### Frontend Issue 20 - Crear bandeja de notificaciones
+**Objetivo**: mostrar avisos internos.
 
-**Objetivo y problema que resuelve**: cerrar el turno y guardar la hora y ubicación de salida para completar la trazabilidad.
-
-**Alcance**:
-- Incluido: búsqueda del activo, timestamp de egreso, coordenadas, foto opcional y diferencia frente al horario final.
-- Excluido: egreso sin autenticación y cierre de servicios ajenos al usuario.
+**Trabajo**: contador, lista, fecha, leído/no leído y `POST /api/notificaciones/leidas`.
 
 **Criterios de aceptación**:
-- un guardia con servicio activo puede registrar egreso,
-- un guardia sin servicio activo recibe error 400,
-- `egreso_timestamp` queda guardado,
-- el registro deja de aparecer como activo.
+- contador coincide,
+- solo muestra avisos propios,
+- marcar leído actualiza la lista.
 
-**Dependencias**: Issue 18, Issue 19.
+**Dependencias**: #6.
 
-**Evidencias o pruebas**:
-- prueba de egreso válido,
-- prueba sin servicio activo,
-- consulta del registro antes y después del egreso.
+**Backend relacionado**: #20.
 
----
+**Evidencia**: pendiente, leído y vacío.
 
-### Issue 21 - Mostrar servicios activos y registros al administrador
-**Título y descripción**: Conectar el panel con `GET /api/admin/activos`, `GET /api/admin/registros` y `GET /api/admin/registros/:id`.
+### Frontend Issue 21 - Listar registros para administración
+**Objetivo**: supervisar activos e historial.
 
-**Objetivo y problema que resuelve**: permitir supervisar quién está trabajando, qué turnos ya terminaron y qué datos tiene cada registro.
-
-**Alcance**:
-- Incluido: listado de activos, historial, detalle por registro y búsqueda visual básica.
-- Excluido: exportación a Excel/PDF y analítica avanzada.
+**Trabajo**: tablas, detalle, filtros por guardia/servicio/estado/período y orden temporal.
 
 **Criterios de aceptación**:
-- el admin visualiza los servicios sin egreso,
-- el historial muestra guardia, servicio, ingreso y egreso,
-- el detalle permite revisar un registro específico,
-- un guardia no puede consultar estos endpoints.
+- filtros no mezclan consultas,
+- distingue activo y cerrado,
+- muestra vacío.
 
-**Dependencias**: Issue 20, Issue 7.
+**Dependencias**: #13.
 
-**Evidencias o pruebas**:
-- captura de activos e historial,
-- prueba de detalle,
-- prueba de acceso con rol guardia.
+**Backend relacionado**: #21.
 
----
+**Evidencia**: filtros, detalle y 404.
 
-### Issue 22 - Completar o eliminar registros desde administración
-**Título y descripción**: Implementar las acciones administrativas `POST /api/admin/registros/:id/completar` y `POST /api/admin/registros/delete`.
+### Frontend Issue 22 - Completar o eliminar registros
+**Objetivo**: ejecutar correcciones administrativas.
 
-**Objetivo y problema que resuelve**: corregir registros operativos incompletos o eliminar datos seleccionados cuando el administrador lo justifica.
-
-**Alcance**:
-- Incluido: completar un registro, eliminar registros seleccionados y actualizar el listado.
-- Excluido: auditoría avanzada de quién borró, recuperación de eliminados y edición libre de timestamps.
+**Trabajo**: selección múltiple, confirmaciones, completar, borrar, refresco y mensajes.
 
 **Criterios de aceptación**:
-- el admin puede completar un registro pendiente,
-- puede eliminar solo los ids seleccionados,
-- el historial se actualiza después de cada operación,
-- un guardia no puede ejecutar estas acciones.
+- no permite acción sin selección,
+- refleja el resultado real del servidor.
 
-**Dependencias**: Issue 21.
+**Dependencias**: #21.
 
-**Evidencias o pruebas**:
-- prueba de completar registro,
-- prueba de eliminación seleccionada,
-- consulta antes y después de cada acción.
+**Backend relacionado**: #22.
 
----
+**Evidencia**: acción exitosa y rechazada.
 
-### Issue 23 - Implementar notificaciones pendientes
-**Título y descripción**: Conectar `GET /api/notificaciones` y `POST /api/notificaciones/leidas` para mostrar y marcar avisos del guardia.
+### Frontend Issue 23 - Crear calendario mensual
+**Objetivo**: visualizar registros por servicio y mes.
 
-**Objetivo y problema que resuelve**: informar cambios operativos al usuario dentro de la aplicación y evitar que los avisos pendientes se pierdan.
-
-**Alcance**:
-- Incluido: consulta de hasta 50 notificaciones pendientes y marcado por usuario autenticado.
-- Excluido: SMS, correo, push móvil y notificaciones de terceros.
+**Trabajo**: selectores, tabla/calendario, detalle diario y estados sin actividad.
 
 **Criterios de aceptación**:
-- el guardia ve solo sus notificaciones no leídas,
-- puede marcarlas como leídas,
-- una notificación leída no vuelve a aparecer como pendiente.
+- cambiar mes consulta de nuevo,
+- diferencia ingreso y egreso,
+- no mezcla datos antiguos durante carga.
 
-**Dependencias**: Issue 5, Issue 14.
+**Dependencias**: #21.
 
-**Evidencias o pruebas**:
-- creación de una notificación de prueba,
-- captura de la bandeja,
-- consulta antes y después de marcar como leída.
+**Backend relacionado**: #23.
 
----
+**Evidencia**: dos meses y período vacío.
 
-### Issue 24 - Visualizar calendario mensual y valores del servicio
-**Título y descripción**: Conectar el panel con `GET /api/admin/calendario/:servicioId` y la actualización de valores mensuales del servicio.
+### Frontend Issue 24 - Editar valores mensuales del servicio
+**Objetivo**: editar valores operativos, sin liquidación.
 
-**Objetivo y problema que resuelve**: consultar los registros agrupados por mes y mantener los valores básicos asociados a cada servicio para la supervisión administrativa.
-
-**Alcance**:
-- Incluido: selector de servicio y mes, registros del período, valores de horas de sueldo/servicio y actualización administrativa.
-- Excluido: liquidación de sueldos, pagos, reportes externos y dashboard predictivo.
+**Trabajo**: campos numéricos, guardar, cancelar, validación y recarga.
 
 **Criterios de aceptación**:
-- el admin puede seleccionar un servicio y mes,
-- el calendario muestra ingresos y egresos del período,
-- los valores mensuales se guardan y vuelven a cargarse,
-- la información corresponde al servicio elegido.
+- persiste valores válidos,
+- rechaza formato inválido,
+- aclara el alcance.
 
-**Dependencias**: Issue 21.
+**Dependencias**: #23.
 
-**Evidencias o pruebas**:
-- captura del calendario mensual,
-- prueba con dos meses distintos,
-- comprobación de persistencia de valores.
+**Backend relacionado**: #24.
 
----
+**Evidencia**: lectura, edición y persistencia.
 
-## 3.3 Validación final de las issues
+### Frontend Issue 25 - Revisar accesibilidad y errores
+**Objetivo**: hacer recuperables todos los flujos.
 
-La issue final de cada bloque debe presentar evidencias verificables en el repositorio: capturas de las pantallas, respuestas de los endpoints, consultas de persistencia y resultados de los casos válidos e inválidos. La aceptación general del Paso 3 se alcanza cuando las 24 issues están documentadas, cada una tiene sus dependencias identificadas y el flujo completo de autenticación, asignación, ingreso, egreso y supervisión puede probarse sin salir del alcance del sistema.
+**Trabajo**: labels, foco, teclado, mensajes, reintentos, confirmaciones y feedback no basado solo en color.
+
+**Criterios de aceptación**:
+- cada control tiene nombre,
+- cada error indica la siguiente acción,
+- funciona en móvil.
+
+**Dependencias**: #1 a #24.
+
+**Backend relacionado**: #25.
+
+**Evidencia**: checklist y pruebas de errores.
+
+### Frontend Issue 26 - Integración, pruebas y documentación del cliente
+**Objetivo**: cerrar el frontend contra API real.
+
+**Trabajo**: pruebas de login, CRUD, asignación, radio de 100 m, segundo activo, egreso, historial y administración; README y despliegue.
+
+**Criterios de aceptación**:
+- comandos reproducibles,
+- contrato coincidente,
+- flujo completo funcional.
+
+**Dependencias**: #1 a #25.
+
+**Backend relacionado**: #26.
+
+**Evidencia**: reporte, capturas y README.
+
+
+
+## 3.3 Issues del repositorio `west-security-backend`
+
+### Backend Issue 1 - Inicializar servidor y configuración
+**Objetivo**: crear API ejecutable.
+
+**Trabajo**: servidor, scripts, puerto, origen permitido, estructura por responsabilidades y `GET /api/health`.
+
+**Criterios de aceptación**:
+- inicia documentadamente,
+- salud responde estado y versión,
+- secretos vienen de entorno.
+
+**Dependencias**: ninguna.
+
+**Frontend relacionado**: #1.
+
+**Evidencia**: arranque y respuesta.
+
+### Backend Issue 2 - Definir contrato de respuestas y errores
+**Objetivo**: hacer predecible la API.
+
+**Trabajo**: formato JSON común, middleware, validación y códigos 400/401/403/404/409/422/500.
+
+**Criterios de aceptación**:
+- errores sin stack trace productivo,
+- campos inválidos identificables.
+
+**Dependencias**: #1.
+
+**Frontend relacionado**: #2 y #3.
+
+**Evidencia**: colección de casos.
+
+### Backend Issue 3 - Implementar SQLite y migraciones
+**Objetivo**: persistir sin perder datos.
+
+**Trabajo**: crear/cargar `west_control.db`, carpeta data, esquema idempotente y claves foráneas.
+
+**Criterios de aceptación**:
+- base nueva y existente arrancan,
+- migrar dos veces no duplica,
+- error de persistencia detiene explícitamente.
+
+**Dependencias**: #1.
+
+**Frontend relacionado**: #3.
+
+**Evidencia**: dos arranques y esquema.
+
+### Backend Issue 4 - Crear usuarios y roles
+**Objetivo**: almacenar admin/guardia con integridad.
+
+**Trabajo**: tabla `usuarios`, username único, campos obligatorios, roles restringidos, hash, bloqueos y timestamps.
+
+**Criterios de aceptación**:
+- duplicados y roles inválidos se rechazan,
+- nunca se guarda password plano.
+
+**Dependencias**: #3.
+
+**Frontend relacionado**: #4.
+
+**Evidencia**: inserciones y rechazos.
+
+### Backend Issue 5 - Implementar login, sesión y token
+**Objetivo**: verificar credenciales y crear acceso seguro.
+
+**Trabajo**: `POST /api/login`, bcrypt, cookie HttpOnly con sesión/token, expiración y respuesta mínima.
+
+**Criterios de aceptación**:
+- válido crea sesión,
+- inválido responde 401 sin revelar usuarios,
+- cookie usa SameSite adecuado.
+
+**Dependencias**: #2 y #4.
+
+**Frontend relacionado**: #5.
+
+**Evidencia**: ambos roles y error.
+
+### Backend Issue 6 - Implementar logout y usuario actual
+**Objetivo**: invalidar acceso y consultar identidad.
+
+**Trabajo**: `POST /api/logout`, `GET /api/me`, invalidación y 401 sin sesión.
+
+**Criterios de aceptación**:
+- logout es inmediato e idempotente,
+- nunca devuelve hashes.
+
+**Dependencias**: #5.
+
+**Frontend relacionado**: #6.
+
+**Evidencia**: antes y después del logout.
+
+### Backend Issue 7 - Proteger rutas por rol
+**Objetivo**: impedir accesos indebidos.
+
+**Trabajo**: `requiereAuth`, `requiereAdmin`, rutas, 401/403 y CORS restringido.
+
+**Criterios de aceptación**:
+- sin sesión responde 401,
+- guardia en admin responde 403,
+- admin autorizado puede acceder.
+
+**Dependencias**: #6.
+
+**Frontend relacionado**: #7.
+
+**Evidencia**: matriz de permisos.
+
+### Backend Issue 8 - CRUD administrativo de usuarios
+**Objetivo**: exponer gestión de personal.
+
+**Trabajo**: `GET/POST/PUT/DELETE /api/admin/usuarios`, validación, hash, ocultamiento de secretos y autoeliminación prohibida.
+
+**Criterios de aceptación**:
+- CRUD admin completo,
+- duplicado responde 409,
+- guardia no tiene permisos.
+
+**Dependencias**: #4 y #7.
+
+**Frontend relacionado**: #8.
+
+**Evidencia**: pruebas CRUD.
+
+### Backend Issue 9 - Persistir bloqueos de guardias
+**Objetivo**: guardar días no disponibles.
+
+**Trabajo**: `PUT /api/admin/usuarios/:id/bloqueos`, formato, validación, lectura y conflicto de asignación.
+
+**Criterios de aceptación**:
+- persiste,
+- un valor inválido responde 422,
+- una asignación incompatible se rechaza.
+
+**Dependencias**: #8.
+
+**Frontend relacionado**: #9.
+
+**Evidencia**: escritura, lectura y conflicto.
+
+### Backend Issue 10 - CRUD de servicios y coordenadas
+**Objetivo**: proveer el contrato de la pantalla de servicios.
+
+**Trabajo**: `GET/POST/PUT/DELETE /api/admin/locales`, nombre único, latitud/longitud y relaciones.
+
+**Criterios de aceptación**:
+- CRUD admin,
+- duplicado responde 409,
+- coordenadas fuera de rango responden 422,
+- política de huérfanos definida.
+
+**Dependencias**: #3 y #7.
+
+**Frontend relacionado**: #10.
+
+**Evidencia**: CRUD y eliminación relacionada.
+
+### Backend Issue 11 - CRUD de horarios
+**Objetivo**: administrar turnos consistentes.
+
+**Trabajo**: endpoints, días, horas, capacidad y servicio asociado.
+
+**Criterios de aceptación**:
+- exige servicio existente,
+- hora final posterior,
+- respeta permisos admin,
+- consulta filtrada por servicio.
+
+**Dependencias**: #10.
+
+**Frontend relacionado**: #11.
+
+**Evidencia**: válidos e inválidos.
+
+### Backend Issue 12 - Asignar guardias a horarios
+**Objetivo**: vincular persona y turno.
+
+**Trabajo**: asignar/desasignar, validar rol, bloqueos, duplicidad y disponibilidad.
+
+**Criterios de aceptación**:
+- solo acepta guardias válidos,
+- bloqueo 409/422 documentado,
+- persiste la asignación,
+- la consulta personal la devuelve.
+
+**Dependencias**: #9 y #11.
+
+**Frontend relacionado**: #12.
+
+**Evidencia**: asignación, bloqueo y lectura.
+
+### Backend Issue 13 - Exponer resumen operativo admin
+**Objetivo**: entregar datos del dashboard.
+
+**Trabajo**: activos, recientes, filtros y límites en `GET /api/admin/activos` y `/api/admin/registros`.
+
+**Criterios de aceptación**:
+- solo admin accede,
+- activos son registros sin egreso,
+- fechas consistentes,
+- respuestas limitadas.
+
+**Dependencias**: #7 y #12.
+
+**Frontend relacionado**: #13.
+
+**Evidencia**: con/sin actividad y filtros.
+
+### Backend Issue 14 - Exponer servicios del guardia
+**Objetivo**: devolver únicamente asignaciones propias.
+
+**Trabajo**: `GET /api/mis-servicios` y `GET /api/servicio/:nombre/horarios`, autorización y ids estables.
+
+**Criterios de aceptación**:
+- no revela asignaciones ajenas,
+- sin asignaciones devuelve lista vacía,
+- servicio no asignado no devuelve horarios.
+
+**Dependencias**: #12.
+
+**Frontend relacionado**: #14.
+
+**Evidencia**: dos usuarios aislados.
+
+### Backend Issue 15 - Validar coordenadas
+**Objetivo**: aceptar ubicación válida y segura.
+
+**Trabajo**: tipos, latitud [-90,90], longitud [-180,180], ausencia, precisión y payload inválido.
+
+**Criterios de aceptación**:
+- los inválidos responden 422,
+- no se procesa ingreso/egreso sin ubicación.
+
+**Dependencias**: #14.
+
+**Frontend relacionado**: #15.
+
+**Evidencia**: válidas, ausentes y fuera de rango.
+
+### Backend Issue 16 - Registrar ingreso y radio de 100 metros
+**Objetivo**: aceptar ingreso solo en el servicio correcto.
+
+**Trabajo**: `POST /api/guardias`, distancia, límite 100 m, usuario, servicio, horario, timestamp y coordenadas.
+
+**Criterios de aceptación**:
+- dentro de 100 m continúa,
+- mayor a 100 m responde 403 sin insertar,
+- el registro aceptado queda abierto.
+
+**Dependencias**: #11, #14 y #15.
+
+**Frontend relacionado**: #16.
+
+**Evidencia**: límite, dentro y fuera.
+
+### Backend Issue 17 - Validar turno y evitar segundo servicio activo
+**Objetivo**: impedir turnos inválidos o simultáneos.
+
+**Trabajo**: día, horario, capacidad, anticipación máxima de 90 minutos, búsqueda sin egreso y transacción.
+
+**Criterios de aceptación**:
+- inválido, completo o anticipado se rechaza,
+- activo devuelve 409 con servicio,
+- peticiones simultáneas no duplican.
+
+**Dependencias**: #16.
+
+**Frontend relacionado**: #17.
+
+**Evidencia**: casos inválidos y doble petición.
+
+### Backend Issue 18 - Registrar egreso
+**Objetivo**: cerrar el registro activo.
+
+**Trabajo**: `POST /api/guardias/:id/egreso`, propietario, coordenadas, timestamp y transición cerrada.
+
+**Criterios de aceptación**:
+- solo dueño o admin autorizado,
+- sin activo responde error,
+- la misma fila recibe egreso,
+- repetirlo no modifica silenciosamente.
+
+**Dependencias**: #15 y #17.
+
+**Frontend relacionado**: #18.
+
+**Evidencia**: válido, ajeno y ausente.
+
+### Backend Issue 19 - Exponer historial propio
+**Objetivo**: entregar trazabilidad al guardia.
+
+**Trabajo**: `GET /api/mis-registros`, orden, límite/paginación y aislamiento por usuario.
+
+**Criterios de aceptación**:
+- incluye abiertos y cerrados,
+- nunca mezcla usuarios,
+- vacío devuelve colección 200.
+
+**Dependencias**: #18.
+
+**Frontend relacionado**: #19.
+
+**Evidencia**: dos usuarios y vacío.
+
+### Backend Issue 20 - Implementar notificaciones pendientes
+**Objetivo**: proveer avisos internos.
+
+**Trabajo**: estructura, `GET /api/notificaciones`, `POST /api/notificaciones/leidas`, aislamiento y marcado idempotente.
+
+**Criterios de aceptación**:
+- solo devuelve notificaciones propias,
+- repetir el marcado es seguro,
+- el límite está documentado.
+
+**Dependencias**: #5 y #14.
+
+**Frontend relacionado**: #20.
+
+**Evidencia**: pendientes, leído y aislamiento.
+
+### Backend Issue 21 - Consultas admin de registros y detalle
+**Objetivo**: proveer supervisión completa.
+
+**Trabajo**: activos, historial, `GET /api/admin/registros/:id`, filtros, límites y datos relacionados.
+
+**Criterios de aceptación**:
+- solo admin accede,
+- detalle válido,
+- id inexistente responde 404,
+- filtros seguros.
+
+**Dependencias**: #18.
+
+**Frontend relacionado**: #21.
+
+**Evidencia**: activos, historial y 404.
+
+### Backend Issue 22 - Completar o eliminar registros admin
+**Objetivo**: resolver incompletos y borrar seleccionados autorizadamente.
+
+**Trabajo**: completar, borrar ids, transacciones y resultados parciales.
+
+**Criterios de aceptación**:
+- solo admin accede,
+- el cierre es válido,
+- ids inexistentes no borran otros,
+- el resultado es explícito.
+
+**Dependencias**: #21.
+
+**Frontend relacionado**: #22.
+
+**Evidencia**: completar, borrar y permisos.
+
+### Backend Issue 23 - Consulta de calendario mensual
+**Objetivo**: agrupar registros por servicio y mes.
+
+**Trabajo**: `GET /api/admin/calendario/:servicioId`, mes/año, validación, zona horaria y orden.
+
+**Criterios de aceptación**:
+- solo devuelve el período solicitado,
+- mes inválido responde 422,
+- cambio de año correcto,
+- período vacío devuelve una colección.
+
+**Dependencias**: #21.
+
+**Frontend relacionado**: #23.
+
+**Evidencia**: dos meses y vacío.
+
+### Backend Issue 24 - Persistir valores mensuales
+**Objetivo**: guardar valores básicos del servicio sin liquidación.
+
+**Trabajo**: consulta/actualización por servicio y mes, unicidad y validación numérica.
+
+**Criterios de aceptación**:
+- admin autorizado,
+- inválido responde 422,
+- el valor actualizado persiste,
+- no se implementan pagos.
+
+**Dependencias**: #23.
+
+**Frontend relacionado**: #24.
+
+**Evidencia**: alta, lectura y actualización.
+
+### Backend Issue 25 - Seguridad y validación transversal
+**Objetivo**: endurecer la API.
+
+**Trabajo**: rate limit de login de 30 intentos/15 minutos, headers, sanitización, logs sin secretos, transacciones y payloads validados.
+
+**Criterios de aceptación**:
+- intento 31 responde 429,
+- no se registran tokens ni passwords,
+- los errores mantienen formato común.
+
+**Dependencias**: #2 y #5 a #24.
+
+**Frontend relacionado**: #25.
+
+**Evidencia**: rate limit, logs y matriz de errores.
+
+### Backend Issue 26 - Integración, pruebas y documentación de API
+**Objetivo**: cerrar el contrato consumible por frontend.
+
+**Trabajo**: pruebas E2E de login, CRUD, asignación, radio 100 m, segundo activo, egreso, historial, notificaciones y calendario; README, entorno, esquema y endpoints.
+
+**Criterios de aceptación**:
+- instalación limpia inicia,
+- comandos reproducibles,
+- contrato coincide,
+- casos válidos y rechazados cubiertos.
+
+**Dependencias**: #1 a #25.
+
+**Frontend relacionado**: #26.
+
+**Evidencia**: reporte, contrato y README.
+
+## 3.4 Orden recomendado
+
+1. Completar issues 1 a 7 en ambos repositorios: base, contrato, sesión y permisos.
+2. Completar 8 a 12: usuarios, bloqueos, servicios, horarios y asignaciones.
+3. Completar 13 a 20: dashboard, operación del guardia, ingreso, egreso e historial.
+4. Completar 21 a 24: supervisión, calendario y valores mensuales.
+5. Completar 25 y 26: seguridad, accesibilidad, integración, pruebas y documentación.
+
+## 3.5 Criterio de cierre
+
+El paso queda completo cuando existen los dos repositorios, cada uno tiene sus 26 issues copiadas o vinculadas, y cada par comparte un contrato probado. El flujo final debe cubrir login por rol, asignación, consulta, validación dentro de 100 metros, ingreso, bloqueo de un segundo servicio activo, egreso, historial y supervisión administrativa.
